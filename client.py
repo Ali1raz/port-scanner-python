@@ -1,15 +1,24 @@
 import socket
 
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+port = int(input("Enter server port<int>: "))
+addr = '127.0.0.1'
+server_address = (addr, port)
 
-host = '127.0.0.1'
-port = 2345
+try:
+    client.connect(server_address)
+    print(f"Connected to the server: ")
 
-client_socket.connect((host, port))
-sentence = input("enter lowercase: ")
+    while True:
+        message = input("Enter message (type 'close' to exit): ")
+        client.sendall(message.encode())
 
-client_socket.sendall(sentence.encode())
-response = client_socket.recv(1024).decode()
+        if message.lower() == 'close':
+            break
 
-print("from server: ", response)
-client_socket.close()
+        data = client.recv(1024)
+        print(f"Received from server: {data.decode('utf-8')}")
+
+finally:
+    client.close()
+
