@@ -26,6 +26,7 @@ def scan_ports(hostname, start, end):
             results.append(port)
 
     for port in range(start, end + 1):
+        # I used threading for concurrency and multiple tasks at a time
         thread = threading.Thread(target=thread_target, args=(hostname, port))
         threads.append(thread)
         thread.start()
@@ -44,11 +45,11 @@ def open_port(hostname, port):
         server_address = (hostname, port)
         sock.bind(server_address)
         # listen(int) used: how many clients can be connected at a time,
-        # exceeded clients are ignored until first client is closed
+        # exceeded clients are ignored until previous clients are closed
         sock.listen(1)
         print(f"Port {port} is now open and listening for connections on {hostname}")
         open_sockets[port] = sock
-        print(f"Current open sockets: {open_sockets.keys()}")  # Debug print
+        print(f"Current open sockets: {open_sockets.keys()}")
         return sock
     except Exception as e:
         print(f"Failed to open port {port}: {e}")
@@ -56,7 +57,7 @@ def open_port(hostname, port):
 
 
 def close_port(port):
-    print(f"Attempting to close port {port}")  # Debug print
+    print(f"Attempting to close port {port}")
     if port in open_sockets:
         try:
             open_sockets[port].close()
@@ -66,7 +67,8 @@ def close_port(port):
             print(f"Failed to close port {port}: {e}")
     else:
         print(f"Port {port} is not managed by this program")
-    print(f"Current open sockets after closing: {open_sockets.keys()}")  # Debug print
+        print("You need to connect a client to a port you opened already to close that port !!!")
+    print(f"Current open sockets after closing: {open_sockets.keys()}")
 
 
 def handle_client(sock):
@@ -125,7 +127,6 @@ def main():
     elif option == 'o':
         if len(sys.argv) != 4:
             print("usage: python [file].py o <hostname> <port>")
-            print("You need to connect a client connected to a port you opened already to close that port !!!")
             sys.exit(1)
 
         hostname = sys.argv[2]
