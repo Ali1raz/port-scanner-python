@@ -4,14 +4,13 @@ import threading
 
 open_sockets = {}
 
-
 def scan_port(host, port):
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(1)
         sock.connect((host, port))
         sock.close()
-        print(f"port {port} is open")
+        print(f"Port {port} is open")
         return True
     except socket.error:
         return False
@@ -26,7 +25,7 @@ def scan_ports(hostname, start, end):
             results.append(port)
 
     for port in range(start, end + 1):
-        # I used threading for concurrency and multiple tasks at a time
+        # Use threading for concurrency and multiple tasks at a time
         thread = threading.Thread(target=thread_target, args=(hostname, port))
         threads.append(thread)
         thread.start()
@@ -44,12 +43,10 @@ def open_port(hostname, port):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_address = (hostname, port)
         sock.bind(server_address)
-        # listen(int) used: how many clients can be connected at a time,
-        # exceeded clients are ignored until previous clients are closed
         sock.listen(1)
         print(f"Port {port} is now open and listening for connections on {hostname}")
         open_sockets[port] = sock
-        print(f"Current open sockets: {open_sockets.keys()}")
+        print(f"Current open sockets: {list(open_sockets.keys())}")
         return sock
     except Exception as e:
         print(f"Failed to open port {port}: {e}")
@@ -67,8 +64,7 @@ def close_port(port):
             print(f"Failed to close port {port}: {e}")
     else:
         print(f"Port {port} is not managed by this program")
-        print("You need to connect a client to a port you opened already to close that port !!!")
-    print(f"Current open sockets after closing: {open_sockets.keys()}")
+    print(f"Current open sockets after closing: {list(open_sockets.keys())}")
 
 
 def handle_client(sock):
@@ -89,6 +85,10 @@ def handle_client(sock):
                         break
             finally:
                 connection.close()
+            # Stop handling clients after the connection is closed
+            if sock in open_sockets.values():
+                close_port(sock.getsockname()[1])
+                break
     except KeyboardInterrupt:
         print("Server interrupted by user")
     finally:
@@ -97,14 +97,14 @@ def handle_client(sock):
 
 def main():
     if len(sys.argv) < 2:
-        print("usage: python [file].py <option> [hostname] [start_port] [end_port]/[port]")
+        print("Usage: python [file].py <option> [hostname] [start_port] [end_port]/[port]")
         sys.exit(1)
 
     option = sys.argv[1]
 
     if option == 's':
         if len(sys.argv) != 5:
-            print("usage: python [file].py s <hostname> <start_port> <end_port>")
+            print("Usage: python [file].py s <hostname> <start_port> <end_port>")
             sys.exit(1)
 
         hostname = sys.argv[2]
@@ -112,7 +112,7 @@ def main():
             start = int(sys.argv[3])
             end = int(sys.argv[4])
         except ValueError:
-            print("Error: start and end ports must be int")
+            print("Error: start and end ports must be integers")
             sys.exit(1)
 
         if start < 1 or end > 65535:
@@ -126,14 +126,14 @@ def main():
 
     elif option == 'o':
         if len(sys.argv) != 4:
-            print("usage: python [file].py o <hostname> <port>")
+            print("Usage: python [file].py o <hostname> <port>")
             sys.exit(1)
 
         hostname = sys.argv[2]
         try:
             port = int(sys.argv[3])
         except ValueError:
-            print("Error: port must be an int")
+            print("Error: port must be an integer")
             sys.exit(1)
 
         if port < 1 or port > 65535:
@@ -148,13 +148,13 @@ def main():
 
     elif option == 'c':
         if len(sys.argv) != 3:
-            print("usage: python [file].py c <port>")
+            print("Usage: python [file].py c <port>")
             sys.exit(1)
 
         try:
             port = int(sys.argv[2])
         except ValueError:
-            print("Error: port must be an int")
+            print("Error: port must be an integer")
             sys.exit(1)
 
         if port < 1 or port > 65535:
